@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>活動領取核對系統</title>
-   <script src="https://unpkg.com"></script>
+   <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 10px; line-height: 1.6; }
         .stats-container { display: flex; justify-content: space-around; background: #f4f4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
@@ -55,10 +55,11 @@
     </div>
 
     <script>
-        // 1. 初始化 Supabase
-        const SUPABASE_URL = 'https://nhyimioswqoxnbyqvkmd.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_QZ7GaYy_yLBd6N40SdeyiA_ItCYqXf2Y';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 1. 初始化 Supabase
+const SUPABASE_URL = 'https://nhyimioswqoxnbyqvkmd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QZ7GaYy_yLBd6N40SdeyiA_ItCYqXf2Y'; // 確保這是你的 anon public key
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
         // 2. 實時統計功能
         async function updateStats() {

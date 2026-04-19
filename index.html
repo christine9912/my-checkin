@@ -9,55 +9,55 @@
 </head>
 <body class="bg-slate-100 min-h-screen p-4 flex flex-col items-center font-sans">
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-6 my-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-6 my-4 border border-slate-200">
         <header class="text-center border-b pb-4">
             <h1 class="text-2xl font-bold text-slate-800">物料領取核對系統</h1>
-            <p class="text-slate-500 text-sm mt-1">請輸入編號及電郵首字母進行登記</p>
+            <p class="text-slate-500 text-sm mt-1 font-medium">即時統計與名單核對</p>
         </header>
 
         <div class="grid grid-cols-3 gap-3">
-            <div class="bg-blue-50 p-3 rounded-xl text-center border border-blue-100 shadow-sm">
-                <p class="text-xs text-blue-600 font-bold mb-1">第一天 (F)</p>
-                <p id="countF" class="text-xl font-mono font-bold text-blue-800">--</p>
+            <div class="bg-blue-50 p-3 rounded-xl text-center border border-blue-200 shadow-sm">
+                <p class="text-[10px] text-blue-600 font-black uppercase tracking-wider mb-1">Day F (餘)</p>
+                <p id="countF" class="text-2xl font-mono font-bold text-blue-800">--</p>
             </div>
-            <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-100 shadow-sm">
-                <p class="text-xs text-purple-600 font-bold mb-1">第二天 (S)</p>
-                <p id="countS" class="text-xl font-mono font-bold text-purple-800">--</p>
+            <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-200 shadow-sm">
+                <p class="text-[10px] text-purple-600 font-black uppercase tracking-wider mb-1">Day S (餘)</p>
+                <p id="countS" class="text-2xl font-mono font-bold text-purple-800">--</p>
             </div>
-            <div class="bg-emerald-50 p-3 rounded-xl text-center border border-emerald-100 shadow-sm">
-                <p class="text-xs text-emerald-600 font-bold mb-1">第三天 (T)</p>
-                <p id="countT" class="text-xl font-mono font-bold text-emerald-800">--</p>
+            <div class="bg-emerald-50 p-3 rounded-xl text-center border border-emerald-200 shadow-sm">
+                <p class="text-[10px] text-emerald-600 font-black uppercase tracking-wider mb-1">Day T (餘)</p>
+                <p id="countT" class="text-2xl font-mono font-bold text-emerald-800">--</p>
             </div>
         </div>
 
-        <div class="space-y-4">
-            <div class="space-y-3">
-                <input id="codeInput" type="text" placeholder="領取編號 (如: F001)" 
-                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono">
-                <input id="prefixInput" type="text" placeholder="電郵頭字母 (如: a)" 
-                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none lowercase font-mono">
+        <div class="space-y-4 pt-2">
+            <div class="grid grid-cols-2 gap-2">
+                <input id="codeInput" type="text" placeholder="編號 (F001)" 
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono text-center">
+                <input id="prefixInput" type="text" placeholder="首字母 (a)" 
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none lowercase font-mono text-center">
             </div>
             
             <button onclick="handleCheckIn()" id="submitBtn"
-                class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-slate-800 active:scale-95 transition-all shadow-lg">
-                確認領取登記
+                class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 active:scale-95 transition-all shadow-lg text-lg">
+                確認登記領取
             </button>
             
-            <div id="statusMsg" class="text-center py-3 rounded-xl hidden text-sm font-bold"></div>
+            <div id="statusMsg" class="text-center py-3 rounded-xl hidden text-sm font-bold border"></div>
         </div>
 
         <div class="pt-2 text-center border-t border-slate-100">
-            <button onclick="toggleUncollectedList()" class="text-slate-400 hover:text-blue-600 text-sm flex items-center justify-center mx-auto gap-2 py-3">
-                <span id="toggleText">🔍 點擊查詢誰還沒有領取</span>
+            <button onclick="toggleUncollectedList()" class="w-full text-slate-500 hover:text-blue-600 text-sm flex items-center justify-center gap-2 py-4 font-medium transition-colors">
+                <span id="toggleText">🔍 點擊查詢誰還沒有登記</span>
             </button>
             
             <div id="listContainer" class="hidden mt-2 text-left bg-slate-50 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
-                <div class="p-3 bg-slate-200 text-[10px] font-bold text-slate-500 grid grid-cols-3">
+                <div class="p-3 bg-slate-200 text-[10px] font-bold text-slate-500 grid grid-cols-3 uppercase tracking-widest">
                     <span>編號</span>
                     <span>姓名</span>
                     <span class="text-right">電郵首字母</span>
                 </div>
-                <div id="idList" class="max-h-60 overflow-y-auto p-2 space-y-1">
+                <div id="idList" class="max-h-80 overflow-y-auto p-2 space-y-1">
                     </div>
             </div>
         </div>
@@ -71,99 +71,133 @@
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 初始化：更新上方「剩餘人數」統計
+        // 初始化與重新計算剩餘人數
         async function fetchStats() {
-            const { data, error } = await supabaseClient.from('check_in').select('code, is_collected');
-            if (error) return;
-            const counts = { F: 0, S: 0, T: 0 };
-            data.forEach(item => {
-                if (item.is_collected === false) {
-                    const day = item.code[0].toUpperCase();
-                    if (counts[day] !== undefined) counts[day]++;
-                }
-            });
-            document.getElementById('countF').innerText = counts.F;
-            document.getElementById('countS').innerText = counts.S;
-            document.getElementById('countT').innerText = counts.T;
+            try {
+                const { data, error } = await supabaseClient.from('check_in').select('code, is_collected');
+                if (error) throw error;
+
+                const counts = { F: 0, S: 0, T: 0 };
+                data.forEach(item => {
+                    // 兼容不同類型的 false (布林值、字串、數字 0)
+                    const isNotCollected = item.is_collected === false || item.is_collected === 'false' || item.is_collected === 0;
+                    
+                    if (isNotCollected && item.code) {
+                        const day = item.code[0].toUpperCase();
+                        if (counts[day] !== undefined) counts[day]++;
+                    }
+                });
+
+                document.getElementById('countF').innerText = counts.F;
+                document.getElementById('countS').innerText = counts.S;
+                document.getElementById('countT').innerText = counts.T;
+                console.log("統計更新完成", counts);
+            } catch (err) {
+                console.error("統計獲取失敗:", err.message);
+                showMsg('無法連線資料庫，請檢查 Key 或 SQL 權限', 'bg-red-50 text-red-600 border-red-200');
+            }
         }
 
-        // 處理登記：當你輸入編號與首字母後，將資料庫狀態改為 true
+        // 處理登記
         async function handleCheckIn() {
             const code = document.getElementById('codeInput').value.trim().toUpperCase();
             const prefix = document.getElementById('prefixInput').value.trim().toLowerCase();
             const btn = document.getElementById('submitBtn');
 
             if (!code || !prefix) {
-                showMsg('請填寫完整資訊', 'bg-red-50 text-red-600 border border-red-100');
+                showMsg('請輸入編號與首字母', 'bg-amber-50 text-amber-600 border-amber-200');
                 return;
             }
 
             btn.disabled = true;
             btn.innerText = '處理中...';
 
-            const { data, error } = await supabaseClient
-                .from('check_in')
-                .update({ is_collected: true, collected_at: new Date() })
-                .eq('code', code)
-                .eq('email_prefix', prefix)
-                .eq('is_collected', false) // 確保只有未領取的才能被更新
-                .select();
+            try {
+                const { data, error } = await supabaseClient
+                    .from('check_in')
+                    .update({ is_collected: true, collected_at: new Date() })
+                    .eq('code', code)
+                    .eq('email_prefix', prefix)
+                    .select();
 
-            if (data && data.length > 0) {
-                showMsg(`✅ ${data[0].name} 登記成功！`, 'bg-green-50 text-green-600 border border-green-100');
-                document.getElementById('codeInput').value = '';
-                document.getElementById('prefixInput').value = '';
-                fetchStats(); // 成功後即時刷新上方人數
-            } else {
-                showMsg('❌ 找不到資料、首字母錯誤或已領取過', 'bg-red-50 text-red-600 border border-red-100');
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    showMsg(`✅ ${data[0].name} (${code}) 登記成功`, 'bg-green-50 text-green-700 border-green-200');
+                    document.getElementById('codeInput').value = '';
+                    document.getElementById('prefixInput').value = '';
+                    fetchStats(); // 重新計算總數
+                    // 如果名單正開著，順便刷新名單
+                    if (listVisible) refreshUncollectedList();
+                } else {
+                    showMsg('❌ 找不到此資料或已登記過', 'bg-red-50 text-red-600 border-red-200');
+                }
+            } catch (err) {
+                showMsg('登記失敗: ' + err.message, 'bg-red-50 text-red-600 border-red-200');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '確認登記領取';
             }
-            btn.disabled = false;
-            btn.innerText = '確認領取登記';
         }
 
         function showMsg(text, classes) {
             const msgBox = document.getElementById('statusMsg');
             msgBox.innerText = text;
-            msgBox.className = `text-center py-3 rounded-xl text-sm font-bold ${classes}`;
+            msgBox.className = `text-center py-3 rounded-xl text-sm font-bold block ${classes}`;
             msgBox.classList.remove('hidden');
+            setTimeout(() => { msgBox.classList.add('hidden'); }, 4000);
         }
 
-        // 核心功能：查詢還沒有提交過的人 (is_collected = false)
+        // 查詢名單功能
         let listVisible = false;
         async function toggleUncollectedList() {
-            const container = document.getElementById('listContainer');
-            const listContent = document.getElementById('idList');
-            const toggleText = document.getElementById('toggleText');
             listVisible = !listVisible;
+            const container = document.getElementById('listContainer');
+            const toggleText = document.getElementById('toggleText');
 
             if (listVisible) {
                 container.classList.remove('hidden');
-                toggleText.innerText = '▲ 隱藏未領取名單';
-                
-                // 從資料庫抓取所有狀態為「未領取」的人
-                const { data, error } = await supabaseClient.from('check_in')
-                    .select('name, code, email_prefix')
-                    .eq('is_collected', false)
+                toggleText.innerText = '▲ 點擊隱藏未登記名單';
+                await refreshUncollectedList();
+            } else {
+                container.classList.add('hidden');
+                toggleText.innerText = '🔍 點擊查詢誰還沒有登記';
+            }
+        }
+
+        async function refreshUncollectedList() {
+            const listContent = document.getElementById('idList');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('check_in')
+                    .select('name, code, email_prefix, is_collected')
                     .order('code', { ascending: true });
 
-                if (data && data.length > 0) {
-                    listContent.innerHTML = data.map(p => `
-                        <div class="grid grid-cols-3 items-center py-2 px-2 border-b border-slate-100 last:border-0 hover:bg-white rounded transition-colors text-xs font-medium">
+                if (error) throw error;
+
+                // 過濾出還沒登記的人
+                const uncollected = data.filter(item => 
+                    item.is_collected === false || item.is_collected === 'false' || item.is_collected === 0
+                );
+
+                if (uncollected.length > 0) {
+                    listContent.innerHTML = uncollected.map(p => `
+                        <div class="grid grid-cols-3 items-center py-2 px-3 border-b border-slate-100 last:border-0 hover:bg-white rounded transition-colors text-xs font-medium">
                             <span class="font-mono text-blue-600 font-bold">${p.code}</span>
                             <span class="text-slate-700">${p.name}</span>
                             <span class="text-slate-400 text-right font-mono">${p.email_prefix}</span>
                         </div>
                     `).join('');
                 } else {
-                    listContent.innerHTML = '<p class="text-center py-4 text-slate-400 text-sm italic">所有人都已經領取完畢！</p>';
+                    listContent.innerHTML = '<p class="text-center py-6 text-slate-400 text-sm italic font-medium">✨ 所有人都已完成登記！</p>';
                 }
-            } else {
-                container.classList.add('hidden');
-                toggleText.innerText = '🔍 點擊查詢誰還沒有領取';
+            } catch (err) {
+                listContent.innerHTML = `<p class="p-4 text-red-500 text-xs text-center font-bold">加載名單失敗: ${err.message}</p>`;
             }
         }
 
-        fetchStats(); // 頁面載入時先執行統計
+        // 網頁開啟後直接抓取一次統計
+        fetchStats();
     </script>
 </body>
 </html>

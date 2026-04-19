@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物料領取核對系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 flex flex-col items-center font-sans">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-6 my-4">
+        <header class="text-center border-b pb-4">
+            <h1 class="text-2xl font-bold text-slate-800">物料領取核對系統</h1>
+            <p class="text-slate-500 text-sm mt-1">請輸入編號及電郵首字母進行登記</p>
+        </header>
+
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-blue-50 p-3 rounded-xl text-center border border-blue-100 shadow-sm">
+                <p class="text-xs text-blue-600 font-bold mb-1">Day F</p>
+                <p id="countF" class="text-xl font-mono font-bold text-blue-800">--</p>
+            </div>
+            <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-100 shadow-sm">
+                <p class="text-xs text-purple-600 font-bold mb-1">Day S</p>
+                <p id="countS" class="text-xl font-mono font-bold text-purple-800">--</p>
+            </div>
+            <div class="bg-emerald-50 p-3 rounded-xl text-center border border-emerald-100 shadow-sm">
+                <p class="text-xs text-emerald-600 font-bold mb-1">Day T</p>
+                <p id="countT" class="text-xl font-mono font-bold text-emerald-800">--</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="space-y-3">
+                <input id="codeInput" type="text" placeholder="領取編號 (如: F001)" 
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono">
+                <input id="prefixInput" type="text" placeholder="電郵頭字母 (如: a)" 
+                    class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none lowercase font-mono">
+            </div>
+            
+            <button onclick="handleCheckIn()" id="submitBtn"
+                class="w-full bg-slate-900 text-white p-4 rounded-xl font-bold hover:bg-slate-800 active:scale-95 transition-all shadow-lg">
+                確認領取登記
+            </button>
+            
+            <div id="statusMsg" class="text-center py-3 rounded-xl hidden text-sm font-bold animate-pulse"></div>
+        </div>
+
+        <div class="pt-2 text-center">
+            <button onclick="toggleUncollectedList()" class="text-slate-400 hover:text-blue-600 text-sm flex items-center justify-center mx-auto gap-2 py-2">
+                <span id="toggleText">🔍 點擊查詢誰還沒有領取</span>
+            </button>
+            
+            <div id="listContainer" class="hidden mt-4 text-left bg-slate-50 rounded-xl border border-slate-200 overflow-hidden shadow-inner">
+                <div class="p-3 bg-slate-200 text-xs font-bold text-slate-600 flex justify-between">
+                    <span>編號</span>
+                    <span>姓名</span>
+                </div>
+                <div id="idList" class="max-h-64 overflow-y-auto p-2 space-y-1">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 請在這裡貼上你的 Supabase 資訊 ---
+        const SUPABASE_URL = 'https://nhyimioswqoxnbyqvkmd.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_QZ7GaYy_yLBd6N40SdeyiA_ItCYqXf2';
+        // ------------------------------------
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 更新頂部統計數據
+        async function fetchStats() {
+            const { data, error } = await supabaseClient.from('check_in').select('code, is_collected');
+            if (error) return;
+            const counts = { F: 0, S: 0, T: 0 };
+            data.forEach(item => {
+                if (!item.is_collected) {
+                    const day = item.code[0].toUpperCase();
+                    if (counts[day] !== undefined) counts[day]++;
+                }
+            });
+            document.getElementById('countF').innerText = counts.F;
+            document.getElementById('countS').innerText = counts.S;
+            document.getElementById('countT').innerText = counts.T;
+        }
+
+        // 處理登記按鈕
+        async function handleCheckIn() {
+            const code = document.getElementById('codeInput').value.trim().toUpperCase();
+            const prefix = document.getElementById('prefixInput').value.trim().toLowerCase();
+            const btn = document.getElementById('submitBtn');
+
+            if (!code || !prefix) {
+                showMsg('請輸入編號及電郵首字母', 'bg-red-50 text-red-600 border border-red-100');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = '正在核對...';
+
+            const { data, error } = await supabaseClient
+                .from('check_in')
+                .update({ is_collected: true, collected_at: new Date() })
+                .eq('code', code)
+                .eq('email_prefix', prefix)
+                .eq('is_collected', false)
+                .select();
+
+            if (data && data.length > 0) {
+                showMsg(`✅ 登記成功：${data[0].name} (${code})`, 'bg-green-50 text-green-600 border border-green-100');
+                document.getElementById('codeInput').value = '';
+                document.getElementById('prefixInput').value = '';
+                fetchStats();
+            } else {
+                showMsg('❌ 找不到資料、首字母錯誤或已領取', 'bg-red-50 text-red-600 border border-red-100');
+            }
+            btn.disabled = false;
+            btn.innerText = '確認領取登記';
+        }
+
+        function showMsg(text, classes) {
+            const msgBox = document.getElementById('statusMsg');
+            msgBox.innerText = text;
+            msgBox.className = `text-center py-3 rounded-xl text-sm font-bold ${classes}`;
+            msgBox.classList.remove('hidden');
+        }
+
+        // 切換顯示未領取名單
+        let listVisible = false;
+        async function toggleUncollectedList() {
+            const container = document.getElementById('listContainer');
+            const listContent = document.getElementById('idList');
+            const toggleText = document.getElementById('toggleText');
+            listVisible = !listVisible;
+
+            if (listVisible) {
+                container.classList.remove('hidden');
+                toggleText.innerText = '▲ 隱藏未領取名單';
+                const { data } = await supabaseClient.from('check_in')
+                    .select('name, code')
+                    .eq('is_collected', false)
+                    .order('code', { ascending: true });
+
+                if (data && data.length > 0) {
+                    listContent.innerHTML = data.map(p => `
+                        <div class="flex justify-between items-center py-2 px-2 border-b border-slate-100 last:border-0 hover:bg-white rounded transition-colors">
+                            <span class="font-mono text-blue-600 font-bold text-sm">${p.code}</span>
+                            <span class="text-slate-700 text-sm">${p.name}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    listContent.innerHTML = '<p class="text-center py-4 text-slate-400 text-sm">🎉 所有物料已全數領取完畢！</p>';
+                }
+            } else {
+                container.classList.add('hidden');
+                toggleText.innerText = '🔍 點擊查詢誰還沒有領取';
+            }
+        }
+
+        // 初始化載入
+        fetchStats();
+    </script>
+</body>
+</html>
